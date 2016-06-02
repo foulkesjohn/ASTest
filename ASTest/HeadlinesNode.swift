@@ -17,20 +17,35 @@ class HeadlinesNode: CollectionNodeController <Headline,
     let collectionViewLayout = CenterCellCollectionViewFlowLayout()
     collectionViewLayout.scrollDirection = .Horizontal
     super.init(collectionViewLayout: collectionViewLayout)
+    
     self.usesImplicitHierarchyManagement = true
+  }
+    
+  override func didLoad() {
+    super.didLoad()
+    
+    // Note: Don't access the view of the node before didLoad() is called
     self.collectionView.decelerationRate = UIScrollViewDecelerationRateFast
-    NSRunLoop.currentRunLoop().addTimer(self.timer,
-                                        forMode: NSRunLoopCommonModes)
+    self.data = Headline.headlines()
+    
+    NSRunLoop.currentRunLoop().addTimer(self.timer, forMode: NSRunLoopCommonModes)
   }
   
-  override func interfaceStateDidChange(newState: ASInterfaceState, fromState oldState: ASInterfaceState) {
-    if newState.contains(.Display) {
-      self.data = Headline.headlines()
-    }
+  override func layoutDidFinish() {
+    super.layoutDidFinish()
+    
+    // 1. Way to fix: Call reloadData() in layoutDidFinish()
+    self.collectionNode.reloadData()
+    
+    // 2. Way to fix: If you use master you should be able to trigger a relayout of items via relayoutItems() that triggers a call to collectionView:constrainedSizeForNodeAtIndexPath:
+    //self.collectionNode.view.relayoutItems()
   }
   
   func collectionView(collectionView: ASCollectionView, constrainedSizeForNodeAtIndexPath indexPath: NSIndexPath) -> ASSizeRange {
-    let size = CGSizeMake(CGRectGetWidth(self.collectionView.frame), 400)
+    // 3. Way to fix: Use the size of the view frame for calculating the width in here. Look into the sourcecode of ASPagerNode as we use the same way in there
+    //let size = CGSizeMake(CGRectGetWidth(self.view.frame), 400)
+    
+    let size = CGSizeMake(CGRectGetWidth(self.collectionNode.frame), 400)
     return ASSizeRangeMake(size, size)
   }
   
@@ -61,8 +76,5 @@ class HeadlinesNode: CollectionNodeController <Headline,
     self.collectionNode.position = CGPointZero
     self.collectionNode.sizeRange = ASRelativeSizeRangeMakeWithExactCGSize(constrainedSize.max)
     return ASStaticLayoutSpec(children: [self.collectionNode])
-    //    let stack = ASStackLayoutSpec.verticalStackLayoutSpec()
-    //    stack.setChildren([self.collectionNode])
-    //    return stack
   }
 }

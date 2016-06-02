@@ -37,7 +37,8 @@ class CollectionNodeController<T, Cell: ASCellNode where Cell: Configurable>: AS
   
   var data = [T]() {
     didSet {
-      self.collectionView.reloadData()
+      // 4. Way to fix is not not reload the data in this method so comment it out
+      self.collectionNode.reloadData()
     }
   }
 }
